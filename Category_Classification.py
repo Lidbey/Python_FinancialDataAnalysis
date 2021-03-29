@@ -8,29 +8,14 @@ import re
 from keras.utils import to_categorical
 import tensorflow as tf
 
-# (tr_im, tr_l), (tst_im, tst_l) = mnist.load_data()
-
-# network = models.Sequential()
-# network.add(layers.Dense(512, activation='relu', input_shape=(28*28,)))
-# network.add(layers.Dense(10, activation='softmax'))
-# network.compile(optimizer='rmsprop',
-#                loss='categorical_crossentropy',
-#                metrics=['accuracy'])
-
-# tr_im = tr_im.reshape((60000, 28 * 28))
-# tst_im = tst_im.reshape((10000, 28 * 28))
-# tr_im = tr_im.astype('float32') / 255
-# tst_im = tst_im.astype('float32') / 255
-
-# tr_l = to_categorical(tr_l)
-# tst_l = to_categorical(tst_l)
-
-# network.fit(tr_im, tr_l, epochs=5, batch_size=128)
-
+#Data Read
 data = pd.read_csv("C:\\Users\\Wojtek\\Desktop\\alldata.csv", sep=',', encoding='latin-1')
 data2 = pd.DataFrame(data)
+
+#Shuffle
 data3 = data2.sample(frac=1, random_state=42).reset_index(drop=True)
 
+#Division of data
 text = data3.iloc[:, 1]
 labels = data3.iloc[:, 0]
 for i in enumerate(labels):
@@ -40,51 +25,38 @@ for i in enumerate(labels):
         labels[i[0]] = 0
     else:
         labels[i[0]] = 1
-
-# for i in range(round(len(labels)/480)):
-#    print(sum(labels[i*480:(i+1)*480]==-1))
-
-# labels = np.asarray(labels).astype('float32')
+        
 labels = to_categorical(labels)
-# own_sentence = re.sub('[\W_]+',' ',own_sentence)
-text = [*map(lambda x: re.sub('[\W_]+', ' ', x), text)]
 
+#Strings transformations
+text = [*map(lambda x: re.sub('[\W_]+', ' ', x), text)]
 text = [*map(lambda x: x.lower(), text)]
 split_text = map(lambda x: x.split(), text)
 split_text2 = pd.DataFrame(split_text)
 split_text3 = list(filter(None, split_text2.values.reshape(split_text2.size)))
 split_text4 = list(filter(str.isalpha, split_text3))
 
-Counter = Counter(split_text4)
 
+#Creating dictionary consisting of 5000 most popular words
+Counter = Counter(split_text4)
 nowords = 5000
 most_popular = Counter.most_common(nowords - 1)
 most_popular_word = [tup[0] for tup in most_popular]
 myDict = {s: i + 1 for i, s in enumerate(most_popular_word)}
 
-# occurences=split_text2.replace(myDict)
+
+#Translating data into dictionary keys
 occurences = split_text2.applymap(myDict.get).fillna(0).astype(int)
-# for i, word in split_text2.iterrows():
-#    print(i)
-#    for j in enumerate(word):
-#        for k in enumerate(most_popular_word):
-#           if(j[1]==k[1]):
-#                occurences[i,j[0]]=k[0]
-
-# pd.DataFrame(occurences2).to_csv("C:\\Users\\Wojtek\\Desktop\\alldata2.csv")
-# pd.DataFrame(data).to_csv("C:\\Users\\Wojtek\\Desktop\\alldata3.csv")
-
-
-# data=pd.read_csv("C:\\Users\\Wojtek\\Desktop\\alldata3.csv",usecols=[1,2])
-# occurences2 = pd.read_csv("C:\\Users\\Wojtek\\Desktop\\alldata2.csv")
-
-# occurences2 = pd.DataFrame(occurences2)
 occurences = np.asarray(occurences)
 
+
+#Reforging data into categorical classification if the word exists
 results = np.zeros((len(occurences), nowords))
 for i, sequence in enumerate(occurences):
     results[i, list(map(int, sequence))] = 1.
 
+
+#Division into training and test sets
 tr_results = results[1:3500]
 tst_results = results[3500:]
 tr_labels = labels[1:3500]
@@ -92,6 +64,15 @@ tst_labels = labels[3500:]
 
 train = np.asarray(tr_results).astype('float32')
 test = np.asarray(tst_results).astype('float32')
+
+
+#Division training set into training and validation set
+x_val = train[:1000]
+x_train = train[1000:]
+y_val = tr_labels[:1000]
+y_train = tr_labels[1000:]
+
+
 # 64-32-16-8-3 -> 0.741
 # 256-3 -> 0.748
 # 256-8 -> 0.748
@@ -104,11 +85,6 @@ model.add(layers.Dense(3, activation='softmax'))
 model.compile(optimizer='rmsprop',
               loss='categorical_crossentropy',
               metrics=['accuracy'])
-
-x_val = train[:1000]
-x_train = train[1000:]
-y_val = tr_labels[:1000]
-y_train = tr_labels[1000:]
 
 history = model.fit(x_train,
                     y_train,
@@ -139,19 +115,15 @@ plt.ylabel('Strata')
 plt.legend()
 plt.show()
 
-# highest accuracy index
+# highest accuracy index and value
 print(val_acc.index(max(val_acc)))
 print(max(val_acc))
-# lowest loss index
+# lowest loss index and value
 print(val_loss.index(min(val_loss)))
 print(min(val_loss))
-# tst_labels_model=model.predict(tst_results)
-# tst_labels_model2=np.round(tst_labels_model)
-# tst_labels_model3=tst_labels_model2.reshape(1345,)
 
-# ress=pd.concat([pd.DataFrame(data[-1345:]).reset_index(drop=True),pd.DataFrame(tst_labels_model3).reset_index(drop=True)],axis=1)
-# ress.to_csv("C:\\Users\\Wojtek\\Desktop\\results.csv")
 
+#Creating a model with efficient hyperparameters
 model2 = models.Sequential()
 model2.add(layers.Dense(128, activation='relu', input_shape=(5000,)))
 model2.add(layers.Dense(16, activation='relu'))
@@ -170,29 +142,27 @@ tst_labels_model = model2.predict(tst_results)
 tst_labels_model2 = np.round(tst_labels_model)
 test_labels_model3 = tf.math.argmax(tst_labels_model2, axis=1).numpy()
 tst_labels = tf.math.argmax(tst_labels, axis=1).numpy()
-# noinspection PyTypeChecker
+
+# noinspection PyTypeChecker - Printing test accuracy
 print(sum(test_labels_model3 == tst_labels) / len(tst_labels))
+
+
+#Saving result
 # pd.DataFrame({'Neural' : test_labels_model3, 'Real':tst_labels}).to_csv(
 # "C:\\Users\\Wojtek\\Desktop\\resultsCategory.csv")
-# ress=pd.concat([pd.DataFrame(data[-1345:]).reset_index(
-# drop=True),pd.DataFrame(tst_labels_model3).reset_index(drop=True)],axis=1)
-# ress.to_csv("C:\\Users\\Wojtek\\Desktop\\results.csv")
 
+
+
+#Checking single results
 
 # change sequence to a sequence of numbers corresponding to most popular words
 own_sentence = "We have a new and innovative strategy. Our company reported a raise in the amount of assets?"
 own_sentence = re.sub('[\W_]+', ' ', own_sentence)
 own_sentence2 = pd.DataFrame(own_sentence.lower().split())
-# own=np.zeros(len(own_sentence2))
 own = own_sentence2.applymap(myDict.get).fillna(0).astype(int)
-# for i in enumerate(own_sentence2):
-#    for k in enumerate(most_popular_word):
-#        if(i[1]==k[1]):
-#            own[i[0]]=k[0]
 
 # change the representation of numbers to a vector of length=len(most_popular_words), and put ones if a word occur
 own2 = np.zeros(nowords)
-# own2[[*map(int,own)]]=1
 own2[own.values] = 1
 own2 = np.asarray(own2).astype('float32')
 own2 = own2.reshape(1, 5000)
