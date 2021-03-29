@@ -6,25 +6,7 @@ from collections import Counter
 import matplotlib.pyplot as plt
 import re
 
-# (tr_im, tr_l), (tst_im, tst_l) = mnist.load_data()
-
-# network = models.Sequential()
-# network.add(layers.Dense(512, activation='relu', input_shape=(28*28,)))
-# network.add(layers.Dense(10, activation='softmax'))
-# network.compile(optimizer='rmsprop',
-#                loss='categorical_crossentropy',
-#                metrics=['accuracy'])
-
-# tr_im = tr_im.reshape((60000, 28 * 28))
-# tst_im = tst_im.reshape((10000, 28 * 28))
-# tr_im = tr_im.astype('float32') / 255
-# tst_im = tst_im.astype('float32') / 255
-
-# tr_l = to_categorical(tr_l)
-# tst_l = to_categorical(tst_l)
-
-# network.fit(tr_im, tr_l, epochs=5, batch_size=128)
-
+#Comments are in category classification file, as it is my current project and I commented my most recent work
 
 data = pd.read_csv("C:\\Users\\Wojtek\\Desktop\\alldata.csv", sep=',', encoding='latin-1')
 data2 = pd.DataFrame(data)
